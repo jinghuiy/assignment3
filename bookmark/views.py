@@ -62,6 +62,7 @@ def category(request, category_name_url):
         pass
 
     # Go render the response and return it to the client.
+    context_dict["category_url"] = category_name_url
     return render_to_response('bookmark/category.html', context_dict, context)
   
 from bookmark.forms import CategoryForm
@@ -92,4 +93,38 @@ def add_category(request):
     # Bad form (or form details), no form supplied...
     # Render the form with error messages (if any).
     return render_to_response('bookmark/add_category.html', {'form': form}, context)
-  
+
+from bookmark.forms import PageForm
+def add_page(request,category_name_url):
+      # Get the context from the request.
+    context = RequestContext(request)
+
+    # A HTTP POST?
+    if request.method == 'POST':
+        form = PageForm(request.POST)
+
+        # Have we been provided with a valid form?
+        if form.is_valid():
+            # Save the new category to the database.
+            form.save(commit=False)
+
+            try:
+                      cat = Category.objects.get(name = category_name_url)
+            except Category.DoesNotExist:
+                      self.add_error("name", "category does not exist")
+            form.instance.category = cat
+            form.save(commit = True)
+
+            # Now call the index() view.
+            # The user will be shown the homepage.
+            return index(request)
+        else:
+            # The supplied form contained errors - just print them to the terminal.
+            print form.errors
+    else:
+        # If the request was not a POST, display the form to enter details.
+        form = PageForm()
+
+    # Bad form (or form details), no form supplied...
+    # Render the form with error messages (if any).
+    return render_to_response('bookmark/add_page.html', {'form': form, 'category_url': category_name_url}, context)
